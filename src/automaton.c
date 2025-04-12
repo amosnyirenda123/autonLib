@@ -168,3 +168,116 @@ void auton_generate_dotfile(const a_automaton_t* automaton, const char* file_nam
 }
 
 
+void auton_generate_jsonfile(const a_automaton_t* automaton, const char* file_name){
+    ASSERT_NOT_ALL(automaton);
+    ASSERT_NOT_ALL(file_name);
+
+    FILE* json_file = fopen(file_name, "w");
+    ASSERT_NOT_ALL(json_file);
+
+
+
+    fprintf(json_file, "{\n");
+        fprintf(json_file, "\t\"num_states\": %d,\n", automaton->num_states);
+        fprintf(json_file, "\t\"num_symbols\": %d,\n", automaton->alphabet->num_members);
+        //Alphabet
+        fprintf(json_file, "\t\"alphabet\": ");
+            fprintf(json_file, "[");
+                for(size_t i = 0; i < automaton->alphabet->num_members; i++){
+                    if(i == (automaton->alphabet->num_members - 1)){
+                        fprintf(json_file, "\"%s\"", automaton->alphabet->members[i]);
+                    }else{
+                        fprintf(json_file, "\"%s\", ", automaton->alphabet->members[i]);
+                    }
+                    
+                }
+            fprintf(json_file, "],\n");
+        //States
+        fprintf(json_file, "\t\"states\": ");
+            fprintf(json_file, "[");
+                for(size_t i = 0; i < automaton->num_states; i++){
+                
+                    if(i == (automaton->num_states - 1)){
+                        fprintf(json_file, "\"%s\"", automaton->states[i]->repr);
+                    }else{
+                        fprintf(json_file, "\"%s\", ", automaton->states[i]->repr);
+                    }
+                    
+                }
+            fprintf(json_file, "],\n");
+
+        //Initial States
+        int start_written = 0;
+        fprintf(json_file, "\t\"initial_states\": ");
+            fprintf(json_file, "[");
+                for(size_t i = 0; i < automaton->num_states; i++){
+                    if(automaton->states[i]->is_starting_state == 1){
+                        if (start_written++) fprintf(json_file, ", ");
+                        fprintf(json_file, "\"%s\"", automaton->states[i]->repr);
+                        
+                    }
+                }
+            fprintf(json_file, "],\n");
+
+            //Final States
+            int end_written = 0;
+            fprintf(json_file, "\t\"final_states\": ");
+            fprintf(json_file, "[");
+                for(size_t i = 0; i < automaton->num_states; i++){
+                    if(automaton->states[i]->is_ending_state) {
+                        if (end_written++) fprintf(json_file, ", ");
+                        fprintf(json_file, "\"%s\"", automaton->states[i]->repr);
+                    }
+                }
+            fprintf(json_file, "],\n");
+
+            //Transitions
+            fprintf(json_file, "\t\"transitions\":{\n");
+                for(size_t i = 0; i < automaton->num_states; i++){
+                    const a_state_t* current_state = automaton->states[i];
+                    fprintf(json_file, "\t\t\"%s\": {\n", current_state->repr);
+
+    
+                    int sym_written = 0;
+                    for (size_t j = 0; j < automaton->alphabet->num_members; j++) {
+                        const char* symbol = automaton->alphabet->members[j];
+                        int found = 0;
+
+        
+                        const a_t_node* tmp = current_state->transitions;
+                        while (tmp) {
+                            if (strcmp(tmp->input_symbol, symbol) == 0) {
+                                found = 1;
+                                break;
+                            }
+                            tmp = tmp->next;
+                        }
+
+                        if (found) {
+                            if (sym_written++) fprintf(json_file, ",\n");
+                            fprintf(json_file, "\t\t\t\"%s\": [", symbol);
+
+                
+                            int dst_written = 0;
+                            tmp = current_state->transitions;
+                            while (tmp) {
+                                if (strcmp(tmp->input_symbol, symbol) == 0) {
+                                    if (dst_written++) fprintf(json_file, ", ");
+                                    fprintf(json_file, "\"%s\"", tmp->to->repr);
+                                }
+                                tmp = tmp->next;
+                            }
+
+                            fprintf(json_file, "]");
+                        }
+                    }
+
+                    fprintf(json_file, "\n\t\t}%s\n", (i == automaton->num_states - 1) ? "" : ",");
+                    
+                }
+            fprintf(json_file, "\t}\n");
+
+    fprintf(json_file, "}\n");
+
+    fclose(json_file);
+}

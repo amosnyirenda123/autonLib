@@ -41,7 +41,9 @@ a_state_t* auton_init_state(const char* repr, int is_starting_state, int is_endi
 a_automaton_t* auton_init_automaton(const int states_count, const int alphabet_size);
 void auton_add_transition(a_state_t* origin, a_state_t* destination, const char* symbol);
 void auton_generate_dotfile(const a_automaton_t* automaton, const char* file_name);
+void auton_generate_jsonfile(const a_automaton_t* automaton, const char* file_name);
 void auton_print_automaton(a_automaton_t* automaton);
+
 
 
 #endif //AUTOMATION_H
